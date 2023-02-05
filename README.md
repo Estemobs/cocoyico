@@ -3,4 +3,5 @@ This code creates a Discord bot with the command prefix ";". It has commands to 
 IMPORTANT :
 
 Some piece of code may be in French, it's up to you to make the change. I did not specify the syntax of each command because it seems logical to me. It's up to you to read the code!
+
 Enjoy 😀!
