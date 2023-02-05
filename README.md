@@ -2,7 +2,5 @@ This code creates a Discord bot with the command prefix ";". It has commands to 
 
 IMPORTANT :
 
-the help command is in French because the bot is designed for French people if it bothers you just change the text to English.
-I did not specify the syntax of each command because it seems logical to me. It's up to you to read the code!
-
+Some piece of code may be in French, it's up to you to make the change. I did not specify the syntax of each command because it seems logical to me. It's up to you to read the code!
 Enjoy 😀!
