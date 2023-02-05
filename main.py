@@ -55,6 +55,39 @@ async def removetag(ctx, title: str):
     else:
         await ctx.send("Tag not found.") #if the tag does not exist, return an error message
 
+@bot.command()
+async def tagedit(ctx, title: str):
+    global tags
+    if title in tags:
+        response = "Enter the new content for the tag: "
+        await ctx.send(response)
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        content = await bot.wait_for('message', check=check)
+        tags[title] = content.content
+        with open("tags.txt", "w") as file:
+            for t,c in tags.items():
+                file.write(f'{t}: {c}\n') #rewrite the tags to the tags.txt file with the edited tag
+        await ctx.send("Tag edited.")
+    else:
+        await ctx.send("Tag not found.")
+
+@bot.command()
+async def tagrename(ctx, old_title: str, new_title: str):
+    global tags
+    if old_title in tags:  # check if tag "old_title" exists
+        tags[new_title] = tags[old_title]   # rename tag "old_title" to "new_title"
+        del tags[old_title]    # delete the original tag "old_title"
+        with open("tags.txt", "w") as file:    # overwrite the tags.txt file with the renamed tag
+            for t,c in tags.items():
+                file.write(f'{t}: {c}\n') 
+        await ctx.send("Tag renamed.")  # package the operation and send a message that the tag has been renamed
+    else:
+        await ctx.send("Tag not found.")  # if the original tag "old_title" is not found, send an error message
+
+
 # Command to display content of a tag given title
 @bot.command()
 async def tag(ctx, title: str):
@@ -83,6 +116,8 @@ async def help(ctx):
     embed.set_thumbnail(url="https://i.imgur.com/zV874EI.png")
     embed.add_field(name="addtag", value="Ajouter un nouvel tag avec le titre et le contenu donné.", inline=False)
     embed.add_field(name="removetag", value="Supprime un tag existant en utilisant son titre.",inline=False)
+    embed.add_field(name="tagedit", value="modifie le contenu d'un tag existant en utilisant sont titre", inline=False)
+    embed.add_field(name="tagrename", value="Modifie le nom du tag", inline=False)
     embed.add_field(name="tag", value="Affiche le contenu d'un tag avec un titre donné.", inline=False)
     embed.add_field(name="taglist", value="Affiche tous les tags dans une liste organisée.", inline=False)
     await ctx.send(embed=embed)
