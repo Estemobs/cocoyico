@@ -1,0 +1,31 @@
+name: Python CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install flake8
+        run: pip install flake8
+
+      - name: Lint with flake8
+        run: flake8 cocoyico.py
+
+      - name: Check syntax with compileall
+        run: python -m compileall cocoyico.py
+
+      - name: Verify tags.json loads correctly at startup
+        run: python tests/test_config.py
