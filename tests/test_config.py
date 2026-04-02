@@ -15,8 +15,6 @@ def test_tags_json():
     )
     with open(tags_path, 'r') as f:
         tags = json.load(f)
-    if tags is None:
-        tags = {}
     assert isinstance(tags, dict), "tags.json must contain a JSON object (dict)"
     print(f"tags.json OK: {len(tags)} tag(s) loaded")
 
