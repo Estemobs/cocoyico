@@ -1,0 +1,9 @@
+[flake8]
+max-line-length = 120
+# Ignoring pre-existing style issues in legacy code; address incrementally:
+#   E302/E303 – blank lines between functions
+#   E261/E262/E265 – inline/block comment formatting
+#   E231 – missing whitespace after ','
+#   F824 – unnecessary `global` declaration
+#   W291/W293 – trailing whitespace
+extend-ignore = E302, E303, E261, E262, E265, E231, F824, W291, W293
