@@ -1,6 +1,7 @@
 import discord
 import os
 import json
+import threading
 from discord.ext import commands
 
 # Import all intents from Discord API
@@ -12,6 +13,8 @@ bot = commands.Bot(command_prefix=";", intents=intents)
 
 # Get the absolute path of tags.json
 tags_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'tags.json')
+
+tags_lock = threading.Lock()
 
 # Load the tags from the JSON file
 with open(tags_path, 'r') as f:
@@ -43,8 +46,9 @@ async def addtag(ctx, title: str):
     tags[title] = content.content
     await ctx.send('Tag created.')
     # Write the tags to the JSON file
-    with open(tags_path, 'w') as f:
-        json.dump(tags, f)
+    with tags_lock:
+        with open(tags_path, 'w') as f:
+            json.dump(tags, f)
 
 # Command to remove a tag
 @bot.command()
@@ -53,8 +57,9 @@ async def removetag(ctx, title: str):
     if title in tags:
         #if the tag exists
         del tags[title] #remove the tag from the tags dictionary
-        with open(tags_path, 'w') as f:
-            json.dump(tags, f) #write the tags to the JSON file without the deleted tag
+        with tags_lock:
+            with open(tags_path, 'w') as f:
+                json.dump(tags, f) #write the tags to the JSON file without the deleted tag
         await ctx.send("Tag removed.") #confirm that the tag has been removed
     else:
         await ctx.send("Tag not found.") #if the tag does not exist, return an error message
@@ -72,8 +77,9 @@ async def tagedit(ctx, title: str):
 
         content = await bot.wait_for('message', check=check)
         tags[title] = content.content
-        with open(tags_path, 'w') as f:
-            json.dump(tags, f) #write the tags to the JSON file with the edited tag
+        with tags_lock:
+            with open(tags_path, 'w') as f:
+                json.dump(tags, f) #write the tags to the JSON file with the edited tag
         await ctx.send("Tag edited.")
     else:
         await ctx.send("Tag not found.")
@@ -85,8 +91,9 @@ async def tagrename(ctx, old_title: str, new_title: str):
     if old_title in tags:  # check if tag "old_title" exists
         tags[new_title] = tags[old_title]   # rename tag "old_title" to "new_title"
         del tags[old_title]    # delete the original tag "old_title"
-        with open(tags_path, 'w') as f:    # overwrite the tags.json file with the renamed tag
-            json.dump(tags, f)
+        with tags_lock:
+            with open(tags_path, 'w') as f:    # overwrite the tags.json file with the renamed tag
+                json.dump(tags, f)
         await ctx.send("Tag renamed.")  # package the operation and send a message that the tag has been renamed
     else:
         await ctx.send("Tag not found.")  # if the original tag "old_title" is not found, send an error message
