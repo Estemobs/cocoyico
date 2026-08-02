@@ -16,7 +16,10 @@ tags_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'tags.json'
 
 tags_lock = threading.Lock()
 
-# Load the tags from the JSON file
+# Load the tags from the JSON file, creating it on first run
+if not os.path.exists(tags_path):
+    with open(tags_path, 'w') as f:
+        json.dump({}, f)
 with open(tags_path, 'r') as f:
     tags = json.load(f)
     if tags is None:

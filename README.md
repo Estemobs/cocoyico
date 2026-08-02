@@ -25,6 +25,8 @@ pip install -r requirements.txt
 { "cocoyico_token": "Votre_Token_Ici" }
 ```
 
+Les notes sont stockées dans `tags.json` (créé automatiquement au premier lancement, et ignoré par git). Un modèle vierge est fourni dans `tags.json.example`.
+
 ### Lancement
 
 python cocoyico.py
