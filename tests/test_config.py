@@ -9,10 +9,11 @@ import sys
 
 
 def test_tags_json():
-    """Verify tags.json exists and is valid JSON containing a dict."""
-    tags_path = os.path.normpath(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tags.json')
-    )
+    """Verify tags.json (or the tags.json.example template) exists and is valid JSON containing a dict."""
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    tags_path = os.path.normpath(os.path.join(repo_root, 'tags.json'))
+    if not os.path.exists(tags_path):
+        tags_path = os.path.normpath(os.path.join(repo_root, 'tags.json.example'))
     with open(tags_path, 'r') as f:
         tags = json.load(f)
     assert isinstance(tags, dict), "tags.json must contain a JSON object (dict)"
