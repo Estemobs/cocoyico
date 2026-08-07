@@ -14,17 +14,27 @@ bot = commands.Bot(command_prefix=";", intents=intents)
 # Get the absolute path of tags.json
 tags_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'tags.json')
 
+# Lock for file operations (read/write)
 tags_lock = threading.Lock()
 
 # Load the tags from the JSON file, creating it on first run
-if not os.path.exists(tags_path):
-    with open(tags_path, 'w') as f:
-        json.dump({}, f)
-with open(tags_path, 'r') as f:
-    tags = json.load(f)
-    if tags is None:
-        tags = {}
+def load_tags():
+    """Load tags from file, return dict."""
+    if not os.path.exists(tags_path):
+        return {}
+    try:
+        with open(tags_path, 'r') as f:
+            data = json.load(f)
+            if isinstance(data, dict):
+                return data
+            else:
+                return {}
+    except (json.JSONDecodeError, OSError):
+        # If file is corrupted or unreadable, start with empty dict
+        return {}
 
+# Initialize tags
+tags = load_tags()
 
 @bot.event
 async def on_ready():
@@ -43,8 +53,13 @@ async def addtag(ctx, title: str):
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel
 
-    # Waits for a message to receive the content of the tag
-    content = await bot.wait_for('message', check=check)
+    # Waits for a message to receive the content of the tag (with timeout)
+    try:
+        content = await bot.wait_for('message', check=check, timeout=60)
+    except asyncio.TimeoutError:
+        await ctx.send("You took too long to respond. Tag creation cancelled.")
+        return
+
     # Adds the title and content to the tags dictionary
     tags[title] = content.content
     await ctx.send('Tag created.')
@@ -78,7 +93,12 @@ async def tagedit(ctx, title: str):
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel
 
-        content = await bot.wait_for('message', check=check)
+        try:
+            content = await bot.wait_for('message', check=check, timeout=60)
+        except asyncio.TimeoutError:
+            await ctx.send("You timed out. Tag edit cancelled.")
+            return
+
         tags[title] = content.content
         with tags_lock:
             with open(tags_path, 'w') as f:
@@ -104,8 +124,9 @@ async def tagrename(ctx, old_title: str, new_title: str):
 # Command to display content of a tag given title
 @bot.command()
 async def tag(ctx, title: str):
-    with open(tags_path, 'r') as f:
-        tags = json.load(f)
+    with tags_lock:
+        with open(tags_path, 'r') as f:
+            tags = json.load(f)
     if title in tags:
         await ctx.send(tags[title])
     else:
@@ -113,12 +134,16 @@ async def tag(ctx, title: str):
 
 @bot.command()
 async def taglist(ctx):
-    with open(tags_path, 'r') as f:
-        tags = json.load(f)
-        if tags is None:
-            tags = {}
+    with tags_lock:
+        with open(tags_path, 'r') as f:
+            tags = json.load(f)
+            if tags is None:
+                tags = {}
 
     tag_names = list(tags.keys())
+    if not tag_names:
+        await ctx.send("No tags available.")
+        return
     description = "\n".join(tag_names)
     embed = discord.Embed(title="Tag List", description=description, color=discord.Color.green())
     embed.set_thumbnail(url="https://i.imgur.com/zV874EI.png")
@@ -127,11 +152,16 @@ async def taglist(ctx):
 
 @bot.command()
 async def server_list(ctx):
-    for guild in bot.guilds:
-        await ctx.send(f"Nom du serveur: {guild.name}")
+    guilds = bot.guilds
+    if not guilds:
+        await ctx.send("The bot is not in any server.")
+        return
+    names = "\n".join(guild.name for guild in guilds)
+    embed = discord.Embed(title="Servers", description=names, color=discord.Color.blue())
+    await ctx.send(embed=embed)
 
 # Remove the built-in help command
-bot.remove_command("help")	
+bot.remove_command("help")
 # Custom help command to display all available commands and their descriptions
 @bot.command(pass_context=True)
 async def help(ctx):
@@ -139,19 +169,21 @@ async def help(ctx):
     embed.set_thumbnail(url="https://i.imgur.com/zV874EI.png")
     embed.add_field(name="addtag", value="Ajouter un nouvel tag avec le titre et le contenu donné.", inline=False)
     embed.add_field(name="removetag", value="Supprime un tag existant en utilisant son titre.",inline=False)
-    embed.add_field(name="tagedit", value="modifie le contenu d'un tag existant en utilisant sont titre", inline=False)
+    embed.add_field(name="tagedit", value="Modifie le contenu d'un tag existant en utilisant son titre", inline=False)
     embed.add_field(name="tagrename", value="Modifie le nom du tag", inline=False)
     embed.add_field(name="tag", value="Affiche le contenu d'un tag avec un titre donné.", inline=False)
     embed.add_field(name="taglist", value="Affiche tous les tags dans une liste organisée.", inline=False)
     embed.add_field(name="server_list", value="Voir la liste des serveurs sur lequel est le bot", inline=False)
     await ctx.send(embed=embed)
 
-token_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'secrets.json')
-# Lire les secrets à partir du fichier JSON
-with open(token_path, "r") as file:
-    secrets = json.load(file)
-
-# Récupérer les tokens
-cocoyico_token = secrets["cocoyico_token"]
+# Load secrets
+secrets_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'secrets.json')
+try:
+    with open(secrets_path, "r") as file:
+        secrets = json.load(file)
+    cocoyico_token = secrets["cocoyico_token"]
+except (FileNotFoundError, KeyError, json.JSONDecodeError) as e:
+    print(f"Error loading secrets: {e}")
+    exit(1)
 
 bot.run(cocoyico_token)
