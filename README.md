@@ -42,3 +42,8 @@ python cocoyico.py
 - `;server_list`: Affiche la liste des serveurs où le bot est présent
 - `;help`: Affiche les commandes disponibles avec leurs descriptions
 
+## État du projet
+
+Version 1.0.0 — les fonctionnalités décrites ci-dessus sont livrées et stables.
+Aucun ticket fonctionnel ouvert ; les mises à jour de dépendances sont automatisées par Renovate.
+
