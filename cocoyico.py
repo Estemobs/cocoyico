@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import os
 import json
@@ -19,8 +20,13 @@ tags_lock = threading.Lock()
 
 # Load the tags from the JSON file, creating it on first run
 def load_tags():
-    """Load tags from file, return dict."""
+    """Load tags from file, creating an empty file on first run."""
     if not os.path.exists(tags_path):
+        try:
+            with open(tags_path, 'w', encoding='utf-8') as f:
+                json.dump({}, f)
+        except OSError:
+            pass
         return {}
     try:
         with open(tags_path, 'r') as f:
@@ -125,8 +131,7 @@ async def tagrename(ctx, old_title: str, new_title: str):
 @bot.command()
 async def tag(ctx, title: str):
     with tags_lock:
-        with open(tags_path, 'r') as f:
-            tags = json.load(f)
+        tags = load_tags()
     if title in tags:
         await ctx.send(tags[title])
     else:
@@ -135,10 +140,9 @@ async def tag(ctx, title: str):
 @bot.command()
 async def taglist(ctx):
     with tags_lock:
-        with open(tags_path, 'r') as f:
-            tags = json.load(f)
-            if tags is None:
-                tags = {}
+        tags = load_tags()
+        if tags is None:
+            tags = {}
 
     tag_names = list(tags.keys())
     if not tag_names:
