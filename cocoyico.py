@@ -34,6 +34,7 @@ def load_tags():
         # If file is corrupted or unreadable, start with empty dict
         return {}
 
+
 # Initialize tags
 tags = load_tags()
 
